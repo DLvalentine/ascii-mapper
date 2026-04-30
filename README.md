@@ -9,8 +9,6 @@ Other ASCII art editors exist. This one differs from them in two big ways:
 1. It uses square tiles, so you can estimate distances well.
 2. It doesn't deal in color, to keep it abstract and distraction-free.
 
-ASCII Mapper started out as a quick-and-dirty online prototype. As of 17 August 2019, there's also a desktop version offering more features.
-
 But how will I know what all the symbols mean?
 ----------------------------------------------
 
@@ -40,4 +38,12 @@ Limitations
 
 ASCII Mapper handles maps of up to 100x100. You can't fit much more in a reasonably-sized browser window anyway, even at minimum zoom. The desktop version puts the map in a scrollable viewport, but even then it can only handle so many tiles at once before it becomes too slow.
 
+V2
+---
+David Valentine here - working on a V2 for this. It does most of what I need, but it's also FOSS and I wanna make it better. I'm working on a game. Tiled is too much, notepad is too little, and this is 99% of the way there. Some stuff I wanna add:
 
+- Grid size controls. I don't need to fill all that empty space, and I don't want my game to have to ignore empty space outside of constrained areas...yet.
+- Other fonts or tilesets
+- More probably. Grid size is the biggest one.
+
+I also got rid of the web version. Desktop is what I want.
