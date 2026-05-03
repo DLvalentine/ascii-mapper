@@ -30,6 +30,9 @@
 # TODO ctrl+z/ctrl+y undo and redo stacks
 # TODO multiple brushes. Left click and right click brush
 # TODO general code quality sweep: constants should be in constant case and separated out, mutables and immutables noted, etc.
+# TODO color / data layer support
+# TODO layer support (if we aren't just gonna go flat file)
+# TODO prefab manager
 
 from __future__ import division
 from __future__ import print_function
