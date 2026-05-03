@@ -29,6 +29,7 @@
 # TODO ask to save on quit instead of asking to quit regardless of no save
 # TODO ctrl+z/ctrl+y undo and redo stacks
 # TODO multiple brushes. Left click and right click brush
+# TODO general code quality sweep: constants should be in constant case and separated out, mutables and immutables noted, etc.
 
 from __future__ import division
 from __future__ import print_function
@@ -38,13 +39,13 @@ import json
 import sys
 
 if sys.version_info.major >= 3:
-	from tkinter import *
+	import tkinter as tk
 	from tkinter import ttk
 	from tkinter.messagebox import showinfo, showerror, askyesno
 	from tkinter.filedialog import askopenfilename, asksaveasfilename
 	from tkinter.colorchooser import askcolor
 else:
-	from Tkinter import *
+	import Tkinter as tk
 	import ttk
 	from tkMessageBox import showinfo, showerror, askyesno
 	from tkFileDialog import askopenfilename, asksaveasfilename
@@ -61,8 +62,10 @@ map_width = 25
 map_height = 25
 map_filename = None
 modified = False
+json_ext = ".json"
+fopen_err = "Error opening file"
 
-map_tiles = [[None for i in range(map_width)] for i in range(map_height)]
+map_tiles = [[None for _ in range(map_width)] for _ in range(map_height)]
 
 def map_data(canvas, tiles):
 	return ["".join(canvas.itemcget(i, "text") for i in j) for j in tiles]
@@ -91,11 +94,11 @@ brush = "#"
 filler = "."
 dragging = False
 
-top = Tk()
+top = tk.Tk()
 top.title("ASCII Mapper")
 top.state("zoomed")
 
-grid_shown = BooleanVar() # Can only be used after calling Tk().
+grid_shown = tk.BooleanVar() # Can only be used after calling Tk().
 
 def redraw_grid(canvas):
 	color = canvas.itemcget("grid", "fill")
@@ -176,19 +179,19 @@ work_area = ttk.Frame(top)
 work_area.columnconfigure(0, weight=1)
 work_area.rowconfigure(0, weight=1)
 
-viewport = Canvas(work_area, scrollregion="0 0 650 650")
+viewport = tk.Canvas(work_area, scrollregion="0 0 650 650")
 viewport.grid(row=0, column=0, sticky="nsew")
 
 v_scroll = ttk.Scrollbar(
 	work_area,
-	orient=VERTICAL,
+	orient=tk.VERTICAL,
 	command=viewport.yview)
 viewport["yscrollcommand"] = v_scroll.set
 v_scroll.grid(row=0, column=1, sticky="ns")
 
 h_scroll = ttk.Scrollbar(
 	work_area,
-	orient=HORIZONTAL,
+	orient=tk.HORIZONTAL,
 	command=viewport.xview)
 viewport["xscrollcommand"] = h_scroll.set
 h_scroll.grid(row=1, column=0, sticky="ew")
@@ -214,17 +217,17 @@ viewport.bind("<ButtonPress-1>", lambda e: start_dragging())
 viewport.bind("<Motion>", paint_tiles)
 viewport.bind("<ButtonRelease-1>", lambda e: stop_dragging())
 
-user_width = IntVar()
+user_width = tk.IntVar()
 user_width.set(25)
-user_height = IntVar()
+user_height = tk.IntVar()
 user_height.set(25)
 
-props_dlg = Toplevel(top)
+props_dlg = tk.Toplevel(top)
 props_dlg.transient(top)
 props_dlg.title("Map properties")
 props_dlg.protocol("WM_DELETE_WINDOW", props_dlg.withdraw)
 props_dlg.bind("<Key-Escape>", lambda e: props_dlg.withdraw())
-props_dlg.resizable(FALSE, FALSE)
+props_dlg.resizable(tk.FALSE, tk.FALSE)
 props_dlg.withdraw()
 
 def resize_map():
@@ -233,8 +236,8 @@ def resize_map():
 	data = map_data(viewport, map_tiles)
 	map_width = user_width.get()
 	map_height = user_height.get()
-	map_tiles = [[None for i in range(map_width)]
-		for i in range(map_height)]
+	map_tiles = [[None for _ in range(map_width)]
+		for _ in range(map_height)]
 	redraw_map(viewport)
 	set_map_data(viewport, data)
 	modified = True
@@ -273,7 +276,7 @@ ttk.Label(props_dlg,
 		row=3, column=0,
 		padx=4, pady=4,
 		sticky="w")
-Spinbox(
+tk.Spinbox(
 	props_dlg,
 	from_=5, to=100, increment=1,
 	width=3,
@@ -284,7 +287,7 @@ ttk.Label(props_dlg,
 		row=4, column=0,
 		padx=4, pady=4,
 		sticky="w")
-Spinbox(props_dlg,
+tk.Spinbox(props_dlg,
 	from_=5, to=100, increment=1,
 	width=3,
 	textvariable=user_height).grid(row=4, column=1, padx=4, pady=4)
@@ -295,13 +298,13 @@ ttk.Button(
 	text="Cancel",
 	width=6,
 	command=cancel_resize,
-	underline=0).pack(side=RIGHT, padx=4, pady=4)
+	underline=0).pack(side=tk.RIGHT, padx=4, pady=4)
 ttk.Button(
 	props_bar,
 	text="Resize",
 	width=6,
 	command=resize_map,
-	underline=0).pack(side=RIGHT, padx=4, pady=4)
+	underline=0).pack(side=tk.RIGHT, padx=4, pady=4)
 props_bar.grid(row=5, column=0, columnspan=2)
 
 def load_file(full_path):
@@ -311,10 +314,10 @@ def load_file(full_path):
 	name, ext = os.path.splitext(fn)
 	try:
 		with open(full_path) as f:
-			if ext == ".json":
+			if ext == json_ext:
 				data = json.load(f)
 			else:
-				data = [line for line in f]
+				data = list(f)
 		set_map_data(viewport, data)
 		modified = False
 		status["text"] = "Opened " + fn
@@ -322,10 +325,10 @@ def load_file(full_path):
 		top.title(fn + " | ASCII Mapper")
 		return True
 	except OSError as e:
-		showerror("Error opening file", str(e), parent=top)
+		showerror(fopen_err, str(e), parent=top)
 		return False
 	except IOError as e: # For Python 2.7
-		showerror("Error opening file", str(e), parent=top)
+		showerror(fopen_err, str(e), parent=top)
 		return False
 
 def save_file(full_path):
@@ -336,7 +339,7 @@ def save_file(full_path):
 	data = map_data(viewport, map_tiles)
 	try:
 		with open(full_path, "w") as f:
-			if ext == ".json":
+			if ext == json_ext:
 				json.dump(data, f)
 			else:
 				f.write("\n".join(data))
@@ -348,10 +351,10 @@ def save_file(full_path):
 		top.title(fn + " | ASCII Mapper")
 		return True
 	except OSError as e:
-		showerror("Error opening file", str(e), parent=top)
+		showerror(fopen_err, str(e), parent=top)
 		return False
 	except IOError as e: # For Python 2.7
-		showerror("Error opening file", str(e), parent=top)
+		showerror(fopen_err, str(e), parent=top)
 		return False
 
 def new_command():
@@ -392,7 +395,7 @@ def open_command():
 		status["text"] = "File opening canceled."
 	elif not os.path.isfile(choice):
 		showerror(
-			"Error opening file",
+			fopen_err
 			"File not found: " + choice,
 			parent=top)
 	elif load_file(choice):
@@ -409,7 +412,7 @@ def saveas_command():
 	
 	choice = asksaveasfilename(
 		title="Save map as...",
-		filetypes=(("ASCII maps", ".json"), ("Plain text", ".txt")),
+		filetypes=(("ASCII maps", json_ext), ("Plain text", ".txt")),
 		parent=top)
 	if len(choice) <= 0:
 		status["text"] = "Save canceled."
@@ -427,7 +430,6 @@ def reload_command():
 			parent=top)
 		if not do_open:
 			status["text"] = "File reloading canceled."
-			return
 		else:
 			load_file(map_filename)
 
@@ -449,36 +451,34 @@ def confirm_quit():
 		status["text"] = "Quit canceled."
 
 toolbar = ttk.Frame(top)
-toolbar.pack(side=TOP, fill="x", padx=4, pady=4)
+toolbar.pack(side=tk.TOP, fill="x", padx=4, pady=4)
 
 brush_view = ttk.Label(
 	toolbar, width=2, font=map_font, text=brush, anchor="center")
-brush_view.pack(side=LEFT)
+brush_view.pack(side=tk.LEFT)
 
-ttk.Separator(toolbar, orient=VERTICAL).pack(side=LEFT, padx=4)
+ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, padx=4)
 
 def toolbutt(txt, under=None, cmd=None):
 	return ttk.Button(
 		toolbar,
 		text=txt,
 		underline=under,
-		#image=img,
-		#compound="left",
 		command=cmd)
 
-toolbutt("New", 0, new_command).pack(side=LEFT)
-toolbutt("Open", 0, open_command).pack(side=LEFT)
-toolbutt("Save", 0, save_command).pack(side=LEFT)
+toolbutt("New", 0, new_command).pack(side=tk.LEFT)
+toolbutt("Open", 0, open_command).pack(side=tk.LEFT)
+toolbutt("Save", 0, save_command).pack(side=tk.LEFT)
 
-ttk.Separator(toolbar, orient=VERTICAL).pack(side=LEFT, padx=4)
+ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, padx=4)
 
-toolbutt("Save as", 5, saveas_command).pack(side=LEFT)
-toolbutt("Reload", 0, reload_command).pack(side=LEFT)
+toolbutt("Save as", 5, saveas_command).pack(side=tk.LEFT)
+toolbutt("Reload", 0, reload_command).pack(side=tk.LEFT)
 
-ttk.Separator(toolbar, orient=VERTICAL).pack(side=LEFT, padx=4)
+ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, padx=4)
 
-toolbutt("Properties", 0, props_dlg.deiconify).pack(side=LEFT)
-toolbutt("About", 1, show_about).pack(side=LEFT)
+toolbutt("Properties", 0, props_dlg.deiconify).pack(side=tk.LEFT)
+toolbutt("About", 1, show_about).pack(side=tk.LEFT)
 
 def pick_background():
 	color = askcolor(initialcolor=viewport["background"])
@@ -497,7 +497,7 @@ def pick_grid_color():
 	if color[1] != None:
 		viewport.itemconfigure("grid", fill=color[1])
 
-view_menu = Menu(top, tearoff=0)
+view_menu = tk.Menu(top, tearoff=0)
 view_menu.add_command(
 	label="Zoom in", underline=5, accelerator="Ctrl-+",
 	command=lambda: set_zoom(viewport, zoom + 1))
@@ -522,20 +522,20 @@ view_menu.add_command(
 	label="Grid color...", underline=5, command=pick_grid_color)
 
 statusbar = ttk.Frame(top)
-statusbar.pack(side=BOTTOM, fill="x", padx=4, pady=4)
+statusbar.pack(side=tk.BOTTOM, fill="x", padx=4, pady=4)
 status = ttk.Label(statusbar, relief="sunken",
 	text="Press any key to set the brush.")
-status.pack(side=LEFT, ipadx=4, ipady=4, fill="x", expand=1)
+status.pack(side=tk.LEFT, ipadx=4, ipady=4, fill="x", expand=1)
 ttk.Menubutton(
 	statusbar,
 	text="View",
 	underline=2,
 	menu=view_menu,
-	direction="above").pack(side=RIGHT)
-ttk.Separator(statusbar, orient=VERTICAL).pack(side=RIGHT, padx=4)
+	direction="above").pack(side=tk.RIGHT)
+ttk.Separator(statusbar, orient=tk.VERTICAL).pack(side=tk.RIGHT, padx=4)
 
 palette = ttk.Frame(top)
-palette.pack(side=LEFT, fill="y", padx=4, pady=4)
+palette.pack(side=tk.LEFT, fill="y", padx=4, pady=4)
 
 def brush_setter(char):
 	def do_set():
@@ -546,9 +546,9 @@ def brush_setter(char):
 
 for i in """.,:;#=/+"~|^&*<>()[]?!$%""":
 	ttk.Button(palette, text=i, width=2,
-		command=brush_setter(i)).pack(side=TOP)
+		command=brush_setter(i)).pack(side=tk.TOP)
 
-work_area.pack(side=RIGHT, fill="both", expand=1, padx=4, pady=4)
+work_area.pack(side=tk.RIGHT, fill="both", expand=1, padx=4, pady=4)
 
 def set_brush_by_key(event):
 	global brush
