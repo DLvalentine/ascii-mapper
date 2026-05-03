@@ -395,7 +395,7 @@ def open_command():
 		status["text"] = "File opening canceled."
 	elif not os.path.isfile(choice):
 		showerror(
-			fopen_err
+			fopen_err,
 			"File not found: " + choice,
 			parent=top)
 	elif load_file(choice):
