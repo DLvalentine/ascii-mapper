@@ -22,6 +22,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# TODO bind fullscreen option
+# TODO properties built into the toolbar or make easier to make appear - it doesn't appear half the time.
+# TODO customizible filler?
+# TODO GIMP/Editor style start screen with properties or open file dialog
+# TODO ask to save on quit instead of asking to quit regardless of no save
+
 from __future__ import division
 from __future__ import print_function
 
@@ -44,7 +50,8 @@ else:
 
 about_text = """
 Creator: No Time To Play
-Version: 2019-08-17
+Maintainer: David Valentine
+Version: 2026-05-03
 License: MIT
 """
 
@@ -84,6 +91,7 @@ dragging = False
 
 top = Tk()
 top.title("ASCII Mapper")
+top.state("zoomed")
 
 grid_shown = BooleanVar() # Can only be used after calling Tk().
 
