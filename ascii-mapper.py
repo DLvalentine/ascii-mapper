@@ -27,6 +27,8 @@
 # TODO customizible filler?
 # TODO GIMP/Editor style start screen with properties or open file dialog
 # TODO ask to save on quit instead of asking to quit regardless of no save
+# TODO ctrl+z/ctrl+y undo and redo stacks
+# TODO multiple brushes. Left click and right click brush
 
 from __future__ import division
 from __future__ import print_function
