@@ -91,7 +91,7 @@ zoom = 3
 scale = zoom * 8
 offset = scale
 
-map_font = "courier " + str(scale * 3 // 4) + " bold"
+map_font = "TerminusTTFWindows " + str(scale * 3 // 4) + " bold"
 
 brush = "#"
 filler = "."
@@ -163,7 +163,7 @@ def set_zoom(canvas, z):
 	h = map_height * scale + offset * 2
 	canvas["scrollregion"] = (0, 0, w, h)
 
-	map_font = "courier " + str(scale * 3 // 4) + " bold"
+	map_font = "TerminusTTFWindows " + str(scale * 3 // 4) + " bold"
 	canvas.itemconfigure("tile", font=map_font)
 	
 	for y in range(map_height):
